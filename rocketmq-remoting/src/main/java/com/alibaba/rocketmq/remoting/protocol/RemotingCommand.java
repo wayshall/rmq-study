@@ -297,7 +297,7 @@ public class RemotingCommand {
         if (this.body != null) {
             result.put(this.body);
         }
-
+        //way: 写入完毕，反转缓冲区(position=0, limit=write length)，为读数据准备
         result.flip();
 
         return result;
@@ -432,7 +432,7 @@ public class RemotingCommand {
         this.version = version;
     }
 
-
+    //递增id
     public int getOpaque() {
         return opaque;
     }

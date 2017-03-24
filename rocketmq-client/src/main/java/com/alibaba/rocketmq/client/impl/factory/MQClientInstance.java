@@ -80,7 +80,9 @@ import com.alibaba.rocketmq.remoting.exception.RemotingException;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 
 
-/**
+/** way：MQClientInstance是个重量级对象，管理客户端的netty网络连接，
+ * 一个clientId@instanceName(ClientConfig#buildMQClientId)对应一个MQClientInstance对象，
+ * 多个producer通常情况下共用一个MQClientInstance对象
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-6-15
  */

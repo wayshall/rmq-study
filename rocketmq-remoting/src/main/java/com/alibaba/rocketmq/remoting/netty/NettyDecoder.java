@@ -40,7 +40,7 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
 
 
     public NettyDecoder() {
-        super(FRAME_MAX_LENGTH, 0, 4, 0, 4);
+        super(FRAME_MAX_LENGTH, 0, 4, 0, 4);//way:消息长度不包含消息长度本身所占的长度，所以lengthAdjustment=0
     }
 
 

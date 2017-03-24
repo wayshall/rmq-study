@@ -75,7 +75,6 @@ public class BrokerStartup {
 
 
     public static void main(String[] args) {
-    	System.setProperty(MixAll.ROCKETMQ_HOME_PROPERTY, "G:\\mydev\\github\\RocketMQ");
         start(createBrokerController(args));
     }
 

@@ -60,7 +60,7 @@ public class BrokerConfig {
     private int pullMessageThreadPoolNums = 16 + Runtime.getRuntime().availableProcessors() * 2;
     private int adminBrokerThreadPoolNums = 16;
     private int clientManageThreadPoolNums = 16;
-
+    //刷新消费偏移量的时间周期
     private int flushConsumerOffsetInterval = 1000 * 5;
 
     private int flushConsumerOffsetHistoryInterval = 1000 * 60;
