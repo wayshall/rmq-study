@@ -35,11 +35,11 @@ import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
  */
 public class NettyEncoder extends MessageToByteEncoder<RemotingCommand> {
     private static final Logger log = LoggerFactory.getLogger(RemotingHelper.RemotingLogName);
-
+    //总长度4+头部长度4+头部数据+body数据
     @Override
     public void encode(ChannelHandlerContext ctx, RemotingCommand remotingCommand, ByteBuf out)
             throws Exception {
-        try {
+        try {//头部使用json序列化
             ByteBuffer header = remotingCommand.encodeHeader();
             out.writeBytes(header);
             byte[] body = remotingCommand.getBody();

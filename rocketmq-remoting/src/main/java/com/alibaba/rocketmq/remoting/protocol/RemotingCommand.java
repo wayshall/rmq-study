@@ -72,7 +72,7 @@ public class RemotingCommand {
         RemotingCommand cmd = new RemotingCommand();
         cmd.setCode(code);
         cmd.customHeader = customHeader;
-        setCmdVersion(cmd);
+        setCmdVersion(cmd);//根据属性rocketmq.remoting.version设置版本
         return cmd;
     }
 
@@ -188,7 +188,7 @@ public class RemotingCommand {
     private static final String DoubleName1 = Double.class.getCanonicalName();//
     private static final String DoubleName2 = double.class.getCanonicalName();//
 
-
+    //根据自定义头的类实例化头对象，并根据extFields的kv设置头对象的字段值
     public CommandCustomHeader decodeCommandCustomHeader(Class<? extends CommandCustomHeader> classHeader)
             throws RemotingCommandException {
         if (this.extFields != null) {
@@ -309,7 +309,7 @@ public class RemotingCommand {
     }
 
 
-    /**
+    /** 总长度+头部长度+头部数据
      * 只打包Header，body部分独立传输
      */
     public ByteBuffer encodeHeader(final int bodyLength) {

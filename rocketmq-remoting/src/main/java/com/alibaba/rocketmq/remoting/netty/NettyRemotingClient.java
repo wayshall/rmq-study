@@ -267,7 +267,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     @Override
     public void start() {
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(//
-            nettyClientConfig.getClientWorkerThreads(), //
+            nettyClientConfig.getClientWorkerThreads(), //worker线程，默认4
             new ThreadFactory() {
 
                 private AtomicInteger threadIndex = new AtomicInteger(0);
@@ -277,15 +277,15 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                     return new Thread(r, "NettyClientWorkerThread_" + this.threadIndex.incrementAndGet());
                 }
             });
-
+        //eventLoopGroupWorker，io线程，默认为1
         Bootstrap handler = this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)//
-            //
+            //禁用Nagle算法，不延迟发送
             .option(ChannelOption.TCP_NODELAY, true)
-            //
+            //TCP会自动发送一个活动探测数据报文
             .option(ChannelOption.SO_KEEPALIVE, false)
-            //
+            //接收缓冲区
             .option(ChannelOption.SO_SNDBUF, nettyClientConfig.getClientSocketSndBufSize())
-            //
+            //发送缓冲区
             .option(ChannelOption.SO_RCVBUF, nettyClientConfig.getClientSocketRcvBufSize())
             //
             .handler(new ChannelInitializer<SocketChannel>() {
@@ -313,7 +313,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                 }
             }
         }, 1000 * 3, 1000);
-
+        //启动rocketmq自定义的事件监听
         if (this.channelEventListener != null) {
             this.nettyEventExecuter.start();
         }
@@ -368,7 +368,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         return this.createChannel(addr);
     }
 
-
+    //根据namesrvAddrChoosed里的地址，获取或者创建NameServer的Chanel，如果namesrvAddrChoosed为null，则namesrvAddrList里随机选一个
     private Channel getAndCreateNameserverChannel() throws InterruptedException {
         String addr = this.namesrvAddrChoosed.get();
         if (addr != null) {
@@ -469,7 +469,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
             log.warn("createChannel: try to lock channel table, but timeout, {}ms", LockTimeoutMillis);
         }
 
-        if (cw != null) {
+        if (cw != null) {//在指定的时间内等待连接，否则输出超时警告的日志
             ChannelFuture channelFuture = cw.getChannelFuture();
             if (channelFuture.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
                 if (cw.isOK()) {

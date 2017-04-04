@@ -1544,7 +1544,7 @@ public class MQClientAPIImpl {
         return getKVConfigValue(NamesrvUtil.NAMESPACE_PROJECT_CONFIG, ip, timeoutMillis);
     }
 
-
+    //根据命名空间和value到nameserver获取配置
     public String getKVConfigByValue(final String namespace, String value, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
         GetKVConfigRequestHeader requestHeader = new GetKVConfigRequestHeader();

@@ -85,7 +85,7 @@ public abstract class NettyRemotingAbstract {
     public void putNettyEvent(final NettyEvent event) {
         this.nettyEventExecuter.putNettyEvent(event);
     }
-
+    //rocketmq自定义的netty时间监听器执行者，监听事件类型见NettyEventType
     class NettyEventExecuter extends ServiceThread {
         private final LinkedBlockingQueue<NettyEvent> eventQueue = new LinkedBlockingQueue<NettyEvent>();
         private final int MaxSize = 10000;
@@ -368,7 +368,7 @@ public abstract class NettyRemotingAbstract {
                     plog.warn(request.toString());
                 }
             });
-
+            //等待 responseFuture.putResponse
             RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
             if (null == responseCommand) {
                 if (responseFuture.isSendRequestOK()) {
