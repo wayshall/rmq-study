@@ -41,7 +41,7 @@ public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrate
         return "AVG";
     }
 
-
+    //一个队列只能被一个消费者消费，但一个消费者可能消费多个队列。所以，当消息队列少于消费者时，多余的消费者有可能饿死。cidAll:消费组下所有 消费者id
     @Override
     public List<MessageQueue> allocate(String consumerGroup, String currentCID, List<MessageQueue> mqAll,
                                        List<String> cidAll) {
@@ -64,9 +64,9 @@ public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrate
             return result;
         }
 
-        int index = cidAll.indexOf(currentCID);
+        int index = cidAll.indexOf(currentCID);//当前消费组的索引位置
         int mod = mqAll.size() % cidAll.size();
-        int averageSize =
+        int averageSize =//averageSize消费者可消费的队列队列数少于或等于消费者数，则averageSize为1；
                 mqAll.size() <= cidAll.size() ? 1 : (mod > 0 && index < mod ? mqAll.size() / cidAll.size()
                         + 1 : mqAll.size() / cidAll.size());
         int startIndex = (mod > 0 && index < mod) ? index * averageSize : index * averageSize + mod;
@@ -76,4 +76,11 @@ public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrate
         }
         return result;
     }
+    /****
+     * // 基本原则，每个队列只能被一个consumer消费
+    // 当messageQueue个数小于等于consume的时候，排在前面（在list中的顺序）的consumer消费一个queue，index大于messageQueue之后的consumer消费不到queue，也就是为0
+    // 当messageQueue个数大于consumer的时候，分两种情况
+    //     当有余数（mod > 0）并且index < mod的时候，当前comsumer可以消费的队列个数是 mqAll.size() / cidAll.size() + 1
+    //     可以整除或者index 大于余数的时候，队列数为：mqAll.size() / cidAll.size()
+     */
 }

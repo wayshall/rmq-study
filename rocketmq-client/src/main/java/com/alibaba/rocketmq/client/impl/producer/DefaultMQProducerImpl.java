@@ -259,7 +259,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         return topicList;
     }
 
-
+    //如果对应的topic没有发布信息或者发布信息里的队列为空，则需要更新topic的路由信息
     @Override
     public boolean isPublishTopicNeedUpdate(String topic) {
         TopicPublishInfo prev = this.topicPublishInfoTable.get(topic);
@@ -364,7 +364,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         this.checkExecutor.submit(request);
     }
 
-
+    //用info更新覆盖topic的发布信息
     @Override
     public void updateTopicPublishInfo(final String topic, final TopicPublishInfo info) {
         if (info != null && topic != null) {
@@ -479,20 +479,20 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         this.makeSureStateOK();
         Validators.checkMessage(msg, this.defaultMQProducer);
 
-        final long maxTimeout = this.defaultMQProducer.getSendMsgTimeout() + 1000;
+        final long maxTimeout = this.defaultMQProducer.getSendMsgTimeout() + 1000;//默认最大超时时间3000+1000
         final long beginTimestamp = System.currentTimeMillis();
         long endTimestamp = beginTimestamp;
-        TopicPublishInfo topicPublishInfo = this.tryToFindTopicPublishInfo(msg.getTopic());
+        TopicPublishInfo topicPublishInfo = this.tryToFindTopicPublishInfo(msg.getTopic());//如果对应topic的发布信息为null或者对应的信息队列为空，则尝试从nameserver更新配置信息
         if (topicPublishInfo != null && topicPublishInfo.ok()) {
             MessageQueue mq = null;
             Exception exception = null;
             SendResult sendResult = null;
-            int timesTotal = 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed();
+            int timesTotal = 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed();//默认重试次数2，所以最多发2+1次
             int times = 0;
             String[] brokersSent = new String[timesTotal];
             for (; times < timesTotal && (endTimestamp - beginTimestamp) < maxTimeout; times++) {
                 String lastBrokerName = null == mq ? null : mq.getBrokerName();
-                MessageQueue tmpmq = topicPublishInfo.selectOneMessageQueue(lastBrokerName);
+                MessageQueue tmpmq = topicPublishInfo.selectOneMessageQueue(lastBrokerName);//轮流获取队列发送
                 if (tmpmq != null) {
                     mq = tmpmq;
                     brokersSent[times] = mq.getBrokerName();
@@ -587,7 +587,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         throw new MQClientException("No route info of this topic, " + msg.getTopic()
                 + FAQUrl.suggestTodo(FAQUrl.NO_TOPIC_ROUTE_INFO), null);
     }
-
+    //如果对应topic的发布信息为null或者对应的信息队列为空，则尝试从nameserver更新配置信息
     private TopicPublishInfo tryToFindTopicPublishInfo(final String topic) {
         TopicPublishInfo topicPublishInfo = this.topicPublishInfoTable.get(topic);
         if (null == topicPublishInfo || !topicPublishInfo.ok()) {
@@ -614,7 +614,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             final long timeout) throws MQClientException, RemotingException, MQBrokerException,
             InterruptedException {
         String brokerAddr = this.mQClientFactory.findBrokerAddressInPublish(mq.getBrokerName());
-        if (null == brokerAddr) {
+        if (null == brokerAddr) {//如更没有获取到broker地址，则尝试更新topic信息，再次获取
             tryToFindTopicPublishInfo(mq.getTopic());
             brokerAddr = this.mQClientFactory.findBrokerAddressInPublish(mq.getBrokerName());
         }
@@ -627,12 +627,12 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                 if (this.tryToCompressMessage(msg)) {
                     sysFlag |= MessageSysFlag.CompressedFlag;
                 }
-
+                //是否事务消息
                 final String tranMsg = msg.getProperty(MessageConst.PROPERTY_TRANSACTION_PREPARED);
                 if (tranMsg != null && Boolean.parseBoolean(tranMsg)) {
                     sysFlag |= MessageSysFlag.TransactionPreparedType;
                 }
-
+                //检查和执行禁止钩子接口？
                 if (hasCheckForbiddenHook()) {
                     CheckForbiddenContext checkForbiddenContext = new CheckForbiddenContext();
                     checkForbiddenContext.setNameSrvAddr(this.defaultMQProducer.getNamesrvAddr());
@@ -644,7 +644,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                     checkForbiddenContext.setUnitMode(this.isUnitMode());
                     this.executeCheckForbiddenHook(checkForbiddenContext);
                 }
-
+                //检查消息发送钩子接口
                 if (this.hasSendMessageHook()) {
                     context = new SendMessageContext();
                     context.setProducerGroup(this.defaultMQProducer.getProducerGroup());
@@ -659,7 +659,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                 SendMessageRequestHeader requestHeader = new SendMessageRequestHeader();
                 requestHeader.setProducerGroup(this.defaultMQProducer.getProducerGroup());
                 requestHeader.setTopic(msg.getTopic());
-                requestHeader.setDefaultTopic(this.defaultMQProducer.getCreateTopicKey());
+                requestHeader.setDefaultTopic(this.defaultMQProducer.getCreateTopicKey());//默认topic名称TBW102
                 requestHeader.setDefaultTopicQueueNums(this.defaultMQProducer.getDefaultTopicQueueNums());
                 requestHeader.setQueueId(mq.getQueueId());
                 requestHeader.setSysFlag(sysFlag);
@@ -685,7 +685,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                     communicationMode,// 6
                     sendCallback// 7
                     );
-
+              //检查消息发送钩子接口
                 if (this.hasSendMessageHook()) {
                     context.setSendResult(sendResult);
                     this.executeSendMessageHookAfter(context);
@@ -727,7 +727,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
     private boolean tryToCompressMessage(final Message msg) {
         byte[] body = msg.getBody();
-        if (body != null) {
+        if (body != null) {//超出配置的大小，则进行压缩，默认4k
             if (body.length >= this.defaultMQProducer.getCompressMsgBodyOverHowmuch()) {
                 try {
                     byte[] data = UtilAll.compress(body, zipCompressLevel);

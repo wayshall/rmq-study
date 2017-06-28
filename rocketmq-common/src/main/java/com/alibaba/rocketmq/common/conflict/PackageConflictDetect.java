@@ -9,7 +9,7 @@ package com.alibaba.rocketmq.common.conflict;
 public class PackageConflictDetect {
     private static boolean detectEnable = Boolean.parseBoolean(System.getProperty(
             "com.alibaba.rocketmq.packageConflictDetect.enable", "true"));
-
+    //如果当前的fastJson版本少于1.2.3，则抛出fastjson版本冲突异常
     public static void detectFastjson() {
         if (detectEnable) {
             final String fastjsonVersion = "1.2.3";

@@ -56,10 +56,10 @@ import com.alibaba.rocketmq.remoting.protocol.RemotingSysResponseCode;
 public abstract class NettyRemotingAbstract {
     private static final Logger plog = LoggerFactory.getLogger(RemotingHelper.RemotingLogName);
 
-    // 信号量，Oneway情况会使用，防止本地Netty缓存请求过多
+    // 信号量，Oneway情况会使用，防止本地Netty缓存请求过多，默认2048
     protected final Semaphore semaphoreOneway;
 
-    // 信号量，异步调用情况会使用，防止本地Netty缓存请求过多
+    // 信号量，异步调用情况会使用，防止本地Netty缓存请求过多，默认2048
     protected final Semaphore semaphoreAsync;
 
     // 缓存所有对外请求
@@ -146,7 +146,7 @@ public abstract class NettyRemotingAbstract {
         }
     }
 
-
+    //NettyClientConfig#clientOnewaySemaphoreValue NettyClientConfig#clientAsyncSemaphoreValue，信号量，默认2048
     public NettyRemotingAbstract(final int permitsOneway, final int permitsAsync) {
         this.semaphoreOneway = new Semaphore(permitsOneway, true);
         this.semaphoreAsync = new Semaphore(permitsAsync, true);
@@ -285,7 +285,7 @@ public abstract class NettyRemotingAbstract {
                     }
                 }
             }
-            else {
+            else {//putResponse会让 #invokeSyncImpl 里等待的调用释放
                 responseFuture.putResponse(cmd);
             }
         }
@@ -318,7 +318,7 @@ public abstract class NettyRemotingAbstract {
 
     abstract public ExecutorService getCallbackExecutor();
 
-
+    //扫描响应表，如果响应没超过timeout，则执行响应回调接口InvokeCallback。
     public void scanResponseTable() {
         Iterator<Entry<Integer, ResponseFuture>> it = this.responseTable.entrySet().iterator();
         while (it.hasNext()) {
@@ -368,7 +368,7 @@ public abstract class NettyRemotingAbstract {
                     plog.warn(request.toString());
                 }
             });
-            //等待 responseFuture.putResponse
+            //等待响应结束后 responseFuture.putResponse
             RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
             if (null == responseCommand) {
                 if (responseFuture.isSendRequestOK()) {

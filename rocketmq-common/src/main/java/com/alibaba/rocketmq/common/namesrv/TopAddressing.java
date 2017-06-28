@@ -24,7 +24,7 @@ import com.alibaba.rocketmq.common.utils.HttpTinyClient.HttpResult;
 public class TopAddressing {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.CommonLoggerName);
     private String nsAddr;
-    private String wsAddr;
+    private String wsAddr;// http://${rocketmq.namesrv.domain}:8080/rocketmq/${rocketmq.namesrv.domain.subgroup} 默认：http://jmenv.tbsite.net:8080/rocketmq/nsaddr
 
 
     public TopAddressing(final String wsAddr) {

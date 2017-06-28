@@ -47,7 +47,7 @@ public class ProcessQueue {
 
     private final Logger log = ClientLogger.getLog();
     private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
-    private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
+    private final TreeMap<Long/**MessageExt#queueOffset**/, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
     private volatile long queueOffsetMax = 0L;
     private final AtomicLong msgCount = new AtomicLong();
 
@@ -65,7 +65,7 @@ public class ProcessQueue {
     private volatile boolean consuming = false;
     private final TreeMap<Long, MessageExt> msgTreeMapTemp = new TreeMap<Long, MessageExt>();
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
-
+    //消费当前消息时积压了多少消息未消费
     private volatile long msgAccCnt = 0;
 
 
@@ -102,9 +102,9 @@ public class ProcessQueue {
 
                 if (!msgs.isEmpty()) {
                     MessageExt messageExt = msgs.get(msgs.size() - 1);
-                    String property = messageExt.getProperty(MessageConst.PROPERTY_MAX_OFFSET);
+                    String property = messageExt.getProperty(MessageConst.PROPERTY_MAX_OFFSET);//当前最大的消息offset
                     if (property != null) {
-                        long accTotal = Long.parseLong(property) - messageExt.getQueueOffset();
+                        long accTotal = Long.parseLong(property) - messageExt.getQueueOffset();//消费当前消息时积压了多少消息未消费
                         if (accTotal > 0) {
                             this.msgAccCnt = accTotal;
                         }

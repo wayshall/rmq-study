@@ -77,7 +77,7 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
-
+    //轮流获取队列发送
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
         if (lastBrokerName != null) {
             int index = this.sendWhichQueue.getAndIncrement();

@@ -286,7 +286,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         return this.rebalanceImpl.getSubscriptionInner();
     }
 
-
+    //如果消费者订阅了该topic，则需要更新
     @Override
     public boolean isSubscribeTopicNeedUpdate(String topic) {
         Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
@@ -335,7 +335,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         }
 
         long size = processQueue.getMsgCount().get();
-        if (size > this.defaultMQPushConsumer.getPullThresholdForQueue()) {
+        if (size > this.defaultMQPushConsumer.getPullThresholdForQueue()) {//如果消息数量超过了流控阈值(1000)，则执行流控延迟消费
             this.executePullRequestLater(pullRequest, PullTimeDelayMillsWhenFlowControl);
             if ((flowControlTimes1++ % 1000) == 0) {
                 log.warn("the consumer message buffer is full, so do flow control, {} {} {}", size,
@@ -344,7 +344,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
             return;
         }
 
-        if (!this.consumeOrderly) {
+        if (!this.consumeOrderly) {//非顺序并发消费时，如果消费横跨的范围超过了最大横跨消费的范围，则执行流控
             if (processQueue.getMaxSpan() > this.defaultMQPushConsumer.getConsumeConcurrentlyMaxSpan()) {
                 this.executePullRequestLater(pullRequest, PullTimeDelayMillsWhenFlowControl);
                 if ((flowControlTimes2++ % 1000) == 0) {
@@ -638,7 +638,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         }
     }
 
-
+    //启动push消费者
     public void start() throws MQClientException {
         switch (this.serviceState) {
         case CREATE_JUST:
@@ -675,12 +675,12 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
             }
             else {
                 switch (this.defaultMQPushConsumer.getMessageModel()) {
-                case BROADCASTING:
+                case BROADCASTING://广播消息把offset保存在本地
                     this.offsetStore =
                             new LocalFileOffsetStore(this.mQClientFactory,
                                 this.defaultMQPushConsumer.getConsumerGroup());
                     break;
-                case CLUSTERING:
+                case CLUSTERING://集群消息把offset保存到远程broker
                     this.offsetStore =
                             new RemoteBrokerOffsetStore(this.mQClientFactory,
                                 this.defaultMQPushConsumer.getConsumerGroup());
@@ -705,7 +705,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
             }
 
             this.consumeMessageService.start();
-
+            //注册消费组到mQClientFactory，默认情况下，mQClientFactory是所有producer和consumer共享的，它会通过心跳上报所有的producer和consumer
             boolean registerOK =
                     mQClientFactory.registerConsumer(this.defaultMQPushConsumer.getConsumerGroup(), this);
             if (!registerOK) {
@@ -1041,7 +1041,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         this.serviceState = serviceState;
     }
 
-
+    //计算所有的ProcessQueue，消费当前消息时积压了多少消息未消费
     private long computeAccumulationTotal() {
         long msgAccTotal = 0;
         ConcurrentHashMap<MessageQueue, ProcessQueue> processQueueTable =
@@ -1055,7 +1055,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
         return msgAccTotal;
     }
-
+    //根据积压的消息和线程池阈值，动态调整线程池
     public void adjustThreadPool() {
         long computeAccTotal = this.computeAccumulationTotal();
         long adjustThreadPoolNumsThreshold = this.defaultMQPushConsumer.getAdjustThreadPoolNumsThreshold();
@@ -1063,11 +1063,11 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         long incThreshold = (long) (adjustThreadPoolNumsThreshold * 1.0);
 
         long decThreshold = (long) (adjustThreadPoolNumsThreshold * 0.8);
-
+        //如果积压的消息大于阈值，增加一条核心线程
         if (computeAccTotal >= incThreshold) {
             this.consumeMessageService.incCorePoolSize();
         }
-
+        //如果积压的消息少于阈值的80%，减少一条核心线程
         if (computeAccTotal < decThreshold) {
             this.consumeMessageService.decCorePoolSize();
         }

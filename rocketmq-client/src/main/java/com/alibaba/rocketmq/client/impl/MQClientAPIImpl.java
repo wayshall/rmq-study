@@ -83,7 +83,7 @@ public class MQClientAPIImpl {
 
     private final static Logger log = ClientLogger.getLog();
     private final RemotingClient remotingClient;
-    private final TopAddressing topAddressing = new TopAddressing(MixAll.WS_ADDR);
+    private final TopAddressing topAddressing = new TopAddressing(MixAll.WS_ADDR);//http://${rocketmq.namesrv.domain}:8080/rocketmq/${rocketmq.namesrv.domain.subgroup} 默认：http://jmenv.tbsite.net:8080/rocketmq/nsaddr
     private final ClientRemotingProcessor clientRemotingProcessor;
     private String nameSrvAddr = null;
     private String projectGroupPrefix;
@@ -130,7 +130,7 @@ public class MQClientAPIImpl {
         return remotingClient;
     }
 
-
+    //从 http://jmenv.tbsite.net:8080/rocketmq/nsaddr 获取nameServer地址
     public String fetchNameServerAddr() {
         try {
             String addrs = this.topAddressing.fetchNSAddr();
@@ -267,7 +267,7 @@ public class MQClientAPIImpl {
         }
 
         RemotingCommand request = null;
-        if (sendSmartMsg) {
+        if (sendSmartMsg) {//根据配置决定是否发送精简版本的头，只是缩短了属性名称
             SendMessageRequestHeaderV2 requestHeaderV2 =
                     SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
             request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE_V2, requestHeaderV2);
@@ -605,7 +605,7 @@ public class MQClientAPIImpl {
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
-
+    //通过消费组名称获取消费者id
     public List<String> getConsumerIdListByGroup(//
             final String addr, //
             final String consumerGroup, //
@@ -1764,13 +1764,13 @@ public class MQClientAPIImpl {
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
-
-    public void registerMessageFilterClass(final String addr,//
-            final String consumerGroup,//
+    //注册消息过滤器类
+    public void registerMessageFilterClass(final String addr,//filterServer地址
+            final String consumerGroup,//消费组
             final String topic,//
             final String className,//
             final int classCRC,//
-            final byte[] classBody,//
+            final byte[] classBody,//过滤器的源代码
             final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
         RegisterMessageFilterClassRequestHeader requestHeader = new RegisterMessageFilterClassRequestHeader();

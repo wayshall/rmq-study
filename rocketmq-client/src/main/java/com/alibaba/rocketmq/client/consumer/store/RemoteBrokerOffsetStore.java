@@ -135,7 +135,7 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
                 AtomicLong offset = this.offsetTable.get(mq);
                 if (offset != null) {
                     if (mqs.contains(mq)) {
-                        try {
+                        try {//上传消费进度到broker
                             this.updateConsumeOffsetToBroker(mq, offset.get());
                             if ((times % 12) == 0) {
                                 log.info("Group: {} ClientId: {} updateConsumeOffsetToBroker {} {}", //

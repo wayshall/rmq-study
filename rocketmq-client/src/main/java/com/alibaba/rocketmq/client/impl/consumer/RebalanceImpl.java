@@ -302,10 +302,10 @@ public abstract class RebalanceImpl {
                     List<MessageQueue> allocateResult = null;
                     try {
                         allocateResult = strategy.allocate(//
-                                this.consumerGroup, //
-                                this.mQClientFactory.getClientId(), //
-                                mqAll,//
-                                cidAll);
+                                this.consumerGroup, //消费组名称
+                                this.mQClientFactory.getClientId(), //clinetId
+                                mqAll,//主题对应的队列
+                                cidAll);//消费组id
                     } catch (Throwable e) {
                         log.error(
                                 "AllocateMessageQueueStrategy.allocate Exception. allocateMessageQueueStrategyName={}",
